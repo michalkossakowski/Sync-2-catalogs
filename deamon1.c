@@ -10,5 +10,8 @@ int main(int argCount, char *arg[])
    
    char *y = arg[2];
    printf("argument string 2: %s \n",y);
+
+      char *y = arg[2];
+   printf("argument string 3: %s \n",y);
    return 0;
 }
