@@ -4,7 +4,7 @@
 #include <stdlib.h> 
 #include <stdio.h> 
 #include <fcntl.h>
-#include <unistd.h> // z linuxa
+#include <unistd.h> 
 #include <linux/fs.h> 
 
 // funkcja main count-ilość argumentów, arg[] - tablica z argumentami
