@@ -5,9 +5,7 @@
 #include <sys/stat.h> // uzyskiwanie informacji o pliku
 #include <unistd.h> // unix standar close/read/write/fork/sleep/exec
 #include <fcntl.h> // open O_RDONLY  O_CREAT
-
-#include <sys/types.h>
-#include <dirent.h>
+#include <dirent.h> // opendir readdir closedir otwieranie zamykanie i czytanie z katalgoów
 
 
 int czy_katalog(char *path) // funkcja sprawdzajacy czy sciezka wskazuje na katalog
@@ -21,7 +19,7 @@ int czy_katalog(char *path) // funkcja sprawdzajacy czy sciezka wskazuje na kata
 void kopiuj(char *a,char *b) //funkcja kopiowania
 {
     int in = open(a,O_RDONLY); //
-    int out = open(b,O_WRONLY|O_CREAT);
+    int out = open(b,O_WRONLY|O_CREAT,0644);
     int size = 1024;
     char *buffor = (char *)malloc(size);
     while(1)
