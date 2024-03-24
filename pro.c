@@ -1,60 +1,42 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/stat.h>
+// dodajemy niezbędne bilbioteki
+#include <stdio.h> // głowna biblioteka c
+#include <stdlib.h> // biblioteka pomocnicza do c
+#include <sys/stat.h> // uzyskiwanie informacji o pliku
 
-int czy_katalog(const char *sciezka) {
-    struct stat s;
-    stat(sciezka, &s);
-    return S_ISDIR(s.st_mode);
+// funkcja sprawdzajacy czy sciezka wskazuje na katalog
+int czy_katalog(char *sciezka) {
+    struct stat s; // stat przechowuje informcje o pliku/katalogu
+    stat(sciezka, &s); // pobranie informacji o pliku ze sciezki do zmiennej s
+    return S_ISDIR(s.st_mode); // sprawdzenia czy podana sciezka to katalog
 }
 
-int main(int count, char * arg[])
+int main(int count, char * arg[]) // count - liczba argumentów , arg - tablica zawierająca argumenty
 {
+    // sprawdzenie ilości argumentów, przerwanie jeżeli jest ich za mało lub za dużo
+    if(count!=3){ 
+        printf("Podano za malo lub za duzo argumentow !!!\n");
+        return 0;
+    }
+    // przypisanie pobraych argumentów do zmienncyh
+    char *a = arg[1];
+    char *b = arg[2];
 
-    char *k1 = arg[1];
+    // sprawdzenie czy pierwszy argument to katalog, przerwanie jeżeli nie jest katalogiem
+    if(czy_katalog(a)==0){
+        printf("Pierwszy argument: %s  nie jest katalogiem !!!\n",a);
+        return 0;
+    }
+    printf("Katalog 1: %s \n",a);
 
-    printf("Katalog 1: %s \n",k1);
+    // sprawdzenie czy drugi argument to katalog, przerwanie jeżeli nie jest katalogiem
+    if(czy_katalog(b)==0){
+        printf("Drugi argument: %s nie jest katalogiem !!!\n",b);
+        return 0;
+    }
+    printf("Katalog 2: %s \n",b);
 
-    char *k2 = arg[2];
-    printf("Katalog 2: %s \n",k2);
+
+
 
 }
 
-//Schemat demona z ksiazki
-
-
-// #include <sys/types.h>
-// #include <sys/stat.h>
-// #include <stdlib.h> 
-// #include <stdio.h> 
-// #include <fcntl.h>
-// #include <unistd.h>
-// #include <linux/fs.h>
-
-// // funkcja main count-ilość argumentów, arg[] - tablica z argumentami
-// int main (void)
-// {
-//  pid_t pid;
-//  int i;
-//  /* stwórz nowy proces */
-//  pid = fork ( );
-//  if (pid == -1)
-//  return -1;
-//  else if (pid != 0)
-//  exit (EXIT_SUCCESS);
-//  /* stwórz nową sesję i grupę procesów */
-//  if (setsid ( ) == -1)
-//  return -1;
-//  /* ustaw katalog roboczy na katalog główny */
-//  if (chdir ("/") == -1)
-//  return -1;
-//  /* zamknij wszystkie pliki otwarte - użycie opcji NR_OPEN to przesada, lecz działa */
-//  for (i = 0; i < NR_OPEN; i++)
-//  close (i);
-//  /* przeadresuj deskryptory plików 0, 1, 2 na /dev/null */
-//  open ("/dev/null", O_RDWR); /* stdin */
-//  dup (0); /* stdout */
-//  dup (0); /* stderror */
-//  /* tu należy wykonać czynności demona… */
-//  return 0;
-// }
