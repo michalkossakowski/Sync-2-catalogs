@@ -12,7 +12,10 @@ int czy_katalog(char *path) // funkcja sprawdzajacy czy sciezka wskazuje na kata
 {
     struct stat info; // stat przechowuje informcje o pliku/katalogu
     stat(path, &info); // pobranie informacji o pliku ze sciezki do zmiennej s
-    return S_ISDIR(info.st_mode); // sprawdzenia czy podana sciezka to katalog 
+    if(S_ISDIR(info.st_mode)==0)// sprawdzenia czy podana sciezka to katalog 
+        return 0; 
+    else
+        return 1;
 }
 
 void kopiuj(char *a,char *b) //funkcja kopiowania
@@ -52,36 +55,50 @@ void kopiujMap(char *a, char *b) // funkcja kopiowania
     close(out); // zamknięcie pliku docelowego
 }
 
-void synchronizuj(char *a,char *b,long int prog) 
+void synchronizuj(char *a, char *b, long int prog, int R)
 {
     DIR *in = opendir(a); // otwarcie katalogu a jako dir
-    DIR *out  = opendir(b);// otwarcie katalogu b jako dir
-    
-    struct dirent *elem  = readdir(in); // wskaźnik elemnet w katalogu
-    while (elem != NULL) // pętla przez wszystki elementy katalogu a
-    { 
-        if (elem->d_type == DT_REG) // jak jest plikiem to kopiuj
-        { 
+    DIR *out = opendir(b); // otwarcie katalogu b jako dir
+
+    struct dirent *elem = readdir(in); // wskaźnik elemnet w katalogu
+    while (elem != NULL) // pętla przez wszystkie elementy katalogu a
+    {
+        // ls -la -> możemy sprawdzić że w każdym katalogu jest "." i ".."
+        //pętla idzie przez wszystki elementy i też przez "." i ".." czy katalog w którym jesteśmy i katalog nadrzędny czyli musimy to wykluczyć żeby nie kopiować tego w nieskończoność
+        if (strcmp(elem->d_name, ".") != 0 && strcmp(elem->d_name, "..") != 0) // Ignorowanie "." - katalogu w którym jesteśmy i ".." - katalogu nadrzędnego
+        {
             char inPath[1000]; // ścieżka do elementu w katalogu a
-            char outPath[1000];// ścieżka do elementu w katalogu b
+            char outPath[1000]; // ścieżka do elementu w katalogu b
 
-            snprintf(inPath, sizeof(inPath), "%s/%s", a, elem->d_name); // połącz nazwe pliku ze pełną ścieżką
-            snprintf(outPath, sizeof(outPath), "%s/%s", b, elem->d_name); // połącz nazwe pliku ze pełną ścieżką
+            snprintf(inPath, sizeof(inPath), "%s/%s", a, elem->d_name); // połącz nazwę pliku ze pełną ścieżką
+            snprintf(outPath, sizeof(outPath), "%s/%s", b, elem->d_name); // połącz nazwę pliku ze pełną ścieżką
 
-            struct stat info; // zmeinna na informacje o pliku
-            stat(inPath, &info);// pobranie informacji o pliku
-            long int size = info.st_size; //  pobranie rozmiaru
-            printf("Wielkosc pliku: %s wynosi: %ld bajtow \n",inPath,size);
+            struct stat info; // zmienna na informacje o pliku
+            stat(inPath, &info); // pobranie informacji o pliku
+            long int size = info.st_size; // pobranie rozmiaru
 
-            if(size > prog) // jeżeli plik większy niż podany w argumencie wtedy
-                kopiujMap(inPath, outPath); //funkcja kopiuj mmap/write
-            else
-                kopiuj(inPath, outPath); //funkcja kopiuj read/write
+            if (S_ISDIR(info.st_mode)==1) // sprzwdzenie czy pobrany elemet to katalog
+            {
+                if (R == 1 && czy_katalog(outPath)==0) // Jeśli rekurencja jest włączona i katalog nie istnieje w katalogu docelowym
+                {
+                    mkdir(outPath, 0777); // Utwórz katalog w katalogu docelowym
+                    printf("Utworzono katalog: %s\n", outPath);
+                }
+                synchronizuj(inPath, outPath, prog, R); // Rekurencyjnie synchronizuj katalogi
+            }
+            else if(elem->d_type == DT_REG) // jak jest plikiem to kopiuj
+            {
+                printf("Wielkość pliku: %s wynosi: %ld bajtów\n", inPath, size);
+                if (size > prog) // Jeżeli plik większy niż podany próg
+                    kopiujMap(inPath, outPath); // Kopiuj z użyciem mmap/write
+                else
+                    kopiuj(inPath, outPath); // Kopiuj z użyciem read/write
+            }
         }
-        elem  = readdir(in); // sprawdza nastepny element
+        elem = readdir(in); // sprawdź następny element
     }
 
-    closedir(in); // zamkinj katalog a
+    closedir(in); // zamknij katalog a
     closedir(out); // zamknij katalog b
 }
 
@@ -143,7 +160,7 @@ int main(int count, char * arg[]) // count - liczba argumentów , arg - tablica 
     printf("> Katalog 2: %s \n",b);
 
     //wywołanie funkcji do synchronizacji
-    synchronizuj(a,b,prog);
+    synchronizuj(a,b,prog,R);
     
     // jak wszystko ok to komunikat
     printf("!!! Zsynchronizowano pomyślnie !!!\n");
