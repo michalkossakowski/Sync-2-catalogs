@@ -88,14 +88,40 @@ void synchronizuj(char *a,char *b,long int prog)
 int main(int count, char * arg[]) // count - liczba argumentów , arg - tablica zawierająca argumenty
 {
     long int prog = 2000000; // domyślny próg rozmiaru do kopiowania
-    if(count==4)
-        prog = atol(arg[3]); // przypisanie własnego progu 
+    long int sleep = 10000; // długośc spania
+    int R = 0; // czy użyta opcja -R
 
-    else if(count!=3) // sprawdzenie ilości argumentów, przerwanie jeżeli jest ich za mało lub za dużo
-    { 
-        printf("Podano za malo lub za duzo argumentow !!!\n");
+    // sprawdzenie ilości argumentów  
+    if(count==6){
+        if(strcmp(arg[5],"-R")==0){ // ./pro a b SLEEP PROG -R
+            R=1;
+            prog= atol(arg[4]);
+            sleep = atol(arg[3]);
+        }
+    }
+    else if(count==5){
+        if(strcmp(arg[4],"-R")==0){ //./pro a b SLEEP -R
+            R=1;
+            sleep = atol(arg[3]);
+        }
+        else{ // ./pro a b SLEEP PROG
+            prog = atol(arg[4]);
+            sleep = atol(arg[3]);
+        }
+    }
+    else if(count==4){
+        if(strcmp(arg[3],"-R")==0) // ./pro a b -R
+            R=1;
+        else
+            sleep = atol(arg[3]); // ./pro a b SLEEP
+    }
+    else if(count!=3){ // sprawdzenie ilości argumentów, przerwanie jeżeli jest ich za mało lub za dużo     //./pro a b
+        printf("!!! Podano za malo lub za duzo argumentow !!!\n");
         return 0;
     }
+
+    printf("> Sleep=%ld Prog=%ld Rekrurencja=%d \n",sleep,prog,R);
+
     // przypisanie pobraych argumentów do zmienncyh
     char *a = arg[1];
     char *b = arg[2];
@@ -103,22 +129,22 @@ int main(int count, char * arg[]) // count - liczba argumentów , arg - tablica 
     // sprawdzenie czy pierwszy argument to katalog, przerwanie jeżeli nie jest katalogiem
     if(czy_katalog(a)==0)
     {
-        printf("Pierwszy argument: %s  nie jest katalogiem !!!\n",a);
+        printf("!!! Pierwszy argument: %s  nie jest katalogiem !!!\n",a);
         return 0;
     }
-    printf("Katalog 1: %s \n",a);
+    printf(">Katalog 1: %s \n",a);
 
     // sprawdzenie czy drugi argument to katalog, przerwanie jeżeli nie jest katalogiem
     if(czy_katalog(b)==0)
     {
-        printf("Drugi argument: %s nie jest katalogiem !!!\n",b);
+        printf("!!! Drugi argument: %s nie jest katalogiem !!!\n",b);
         return 0;
     }
-    printf("Katalog 2: %s \n",b);
+    printf("> Katalog 2: %s \n",b);
 
     //wywołanie funkcji do synchronizacji
     synchronizuj(a,b,prog);
     
     // jak wszystko ok to komunikat
-    printf("Zsynchronizowano pomyślnie !!!\n");
+    printf("!!! Zsynchronizowano pomyślnie !!!\n");
 }
