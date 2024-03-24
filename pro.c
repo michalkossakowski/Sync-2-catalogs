@@ -9,72 +9,61 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-// funkcja sprawdzajacy czy sciezka wskazuje na katalog
-int czy_katalog(char *sciezka) {
-    struct stat sciezka_stat; // stat przechowuje informcje o pliku/katalogu
-    stat(sciezka, &sciezka_stat); // pobranie informacji o pliku ze sciezki do zmiennej s
-    return S_ISDIR(sciezka_stat.st_mode); // sprawdzenia czy podana sciezka to katalog
+
+int czy_katalog(char *path) // funkcja sprawdzajacy czy sciezka wskazuje na katalog
+{
+    struct stat info; // stat przechowuje informcje o pliku/katalogu
+    stat(path, &info); // pobranie informacji o pliku ze sciezki do zmiennej s
+    return S_ISDIR(info.st_mode); // sprawdzenia czy podana sciezka to katalog 
 }
 
-void kopiuj(char *a,char *b) {
 
+void kopiuj(char *a,char *b) //funkcja kopiowania
+{
     int in = open(a,O_RDONLY); //
     int out = open(b,O_WRONLY|O_CREAT);
     int size = 1024;
     char *buffor = (char *)malloc(size);
-    while(1){
+    while(1)
+    {
         int r = read(in,buffor,size);
         write(out,buffor,r);
         if(r < size){break;}
     }
+    printf("Kopia: %s -> %s\n", a, b);
     free(buffor);
     close(in);
     close(out);
 }
 
-void synchronizuj(char *a,char *b) {
-    DIR *zrodlo, *cel;
-    struct dirent *entry;
-    struct stat statbuf;
+void synchronizuj(char *a,char *b) 
+{
+    DIR *in = opendir(a); // otwarcie katalogu a jako dir
+    DIR *out  = opendir(b);// otwarcie katalogu b jako dir
 
-    zrodlo = opendir(a);
-    cel = opendir(b);
+    struct dirent *elem  = readdir(in); // wskaźnik elemnet w katalogu
 
-    while ((entry = readdir(zrodlo)) != NULL) {
-        char zrodloPath[1024];
-        char celPath[1024];
+    while (elem != NULL) // pętla przez wszystki elementy katalogu a
+    { 
+        char inPath[2048]; // ścieżka do elementu w katalogu a
+        char outPath[2048];// ścieżka do elementu w katalogu b
+        
+        snprintf(inPath, sizeof(inPath), "%s/%s", a, elem->d_name); // połącz nazwe pliku ze pełną ścieżką
+        snprintf(outPath, sizeof(outPath), "%s/%s", b, elem->d_name); // połącz nazwe pliku ze pełną ścieżką
 
-        snprintf(zrodloPath, sizeof(zrodloPath), "%s/%s", a, entry->d_name);
-        snprintf(celPath, sizeof(celPath), "%s/%s", b, entry->d_name);
+        struct stat info; // informacje o pliku
+        stat(inPath, &info);// pobranie info o pliku
 
-        if (lstat(zrodloPath, &statbuf) < 0) {
-            perror("lstat");
-            closedir(zrodlo);
-            closedir(cel);
-            exit(EXIT_FAILURE);
+        if (S_ISDIR(info.st_mode)==0) // jak nie jest katalogiem  to kopiuj
+        { 
+            kopiuj(inPath, outPath); //funkcja kopiuj
         }
 
-        if (S_ISDIR(statbuf.st_mode)) {
-            if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
-                synchronizuj(zrodloPath, celPath);
-            }
-        } else {
-            struct stat destStat;
-            if (lstat(celPath, &destStat) == 0) {
-                // If file exists in cel but not in zrodlo, remove it
-                if (access(zrodloPath, F_OK) == -1) {
-                    printf("Removing %s\n", celPath);
-                    unlink(celPath);
-                }
-            } else {
-                printf("Copying %s to %s\n", zrodloPath, celPath);
-                kopiuj(zrodloPath, celPath);
-            }
-        }
+        elem  = readdir(in); // sprawdza nastepny element
     }
 
-    closedir(zrodlo);
-    closedir(cel);
+    closedir(in); // zamkinj katalog a
+    closedir(out); // zamknij katalog b
 }
 
 
@@ -107,6 +96,5 @@ int main(int count, char * arg[]) // count - liczba argumentów , arg - tablica 
     synchronizuj(a,b);
     
     // jak wszystko ok to komunikat
-    printf("Zsynchronizowano pomyślnie");
+    printf("Zsynchronizowano pomyślnie !!!\n");
 }
-
