@@ -149,7 +149,7 @@ int main(int count, char * arg[]) // count - liczba argumentów , arg - tablica 
         printf("!!! Pierwszy argument: %s  nie jest katalogiem !!!\n",a);
         return 0;
     }
-    printf(">Katalog 1: %s \n",a);
+    printf("> Katalog 1: %s \n",a);
 
     // sprawdzenie czy drugi argument to katalog, przerwanie jeżeli nie jest katalogiem
     if(czy_katalog(b)==0)
