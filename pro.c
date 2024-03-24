@@ -6,8 +6,7 @@
 #include <unistd.h> // unix standar close/read/write/fork/sleep/exec
 #include <fcntl.h> // open O_RDONLY  O_CREAT
 #include <dirent.h> // opendir readdir closedir otwieranie zamykanie i czytanie z katalgoów
-
-#include <sys/mman.h>
+#include <sys/mman.h> // mapowanie plików mmap
 
 int czy_katalog(char *path) // funkcja sprawdzajacy czy sciezka wskazuje na katalog
 {
