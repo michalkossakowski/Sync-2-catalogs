@@ -19,7 +19,7 @@ int czy_katalog(char *path) // funkcja sprawdzajacy czy sciezka wskazuje na kata
 void kopiuj(char *a,char *b) //funkcja kopiowania
 {
     int in = open(a,O_RDONLY); //
-    int out = open(b,O_WRONLY|O_CREAT);
+    int out = open(b,O_WRONLY|O_CREAT,0644);
     int size = 1024;
     char *buffor = (char *)malloc(size);
     while(1)
