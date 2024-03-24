@@ -5,9 +5,7 @@
 #include <sys/stat.h> // uzyskiwanie informacji o pliku
 #include <unistd.h> // unix standar close/read/write/fork/sleep/exec
 #include <fcntl.h> // open O_RDONLY  O_CREAT
-
-#include <sys/types.h>
-#include <dirent.h>
+#include <dirent.h> // opendir readdir closedir otwieranie zamykanie i czytanie z katalgoów
 
 
 int czy_katalog(char *path) // funkcja sprawdzajacy czy sciezka wskazuje na katalog
