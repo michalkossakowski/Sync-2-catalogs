@@ -8,6 +8,9 @@
 #include <dirent.h> // opendir readdir closedir otwieranie zamykanie i czytanie z katalgoów
 #include <sys/mman.h> // mapowanie plików mmap
 
+
+#include <utime.h> // zmiana czasu modyfikacji pliku
+
 int czy_katalog(char *path) // funkcja sprawdzajacy czy sciezka wskazuje na katalog
 {
     struct stat info; // stat przechowuje informcje o pliku/katalogu
@@ -31,6 +34,13 @@ void kopiuj(char *a,char *b) //funkcja kopiowania
         if(r < size) //jeśli odczytano cały plik to break
             break;
     }
+
+    struct stat info;// zmienna na informacje o pliku
+    fstat(in, &info);// pobranie informacji o pliku źródłowym
+    struct utimbuf time; // zmienna do przechowywania informacji o czasie modyfikacji pliku
+    time.modtime = info.st_mtime; // wstawienie do zmiennej daty modyfikacji pliku z katalogu zrodlowego
+    utime(b, &time); // aktualizacja czasu modyfkicaji pliku dla pliku wyjsciowego (kopii)
+
     printf("Kopia read/write : %s -> %s\n", a, b); // wypisz na ekranie informacje o kopiowaniu
     free(buffor); //zwolnij buffor
     close(in); //zamknij plik wejsciowy
@@ -50,6 +60,10 @@ void kopiujMap(char *a, char *b) // funkcja kopiowania
     write(out, map, size); // zapisanie zmapowanego pliku do pliku docelowego // map - wskaznik do daych ktore maja byc zapisane
     printf("Kopia mmap/write: %s -> %s\n", a, b); // wypisanie informacji o kopiowaniu
     
+    struct utimbuf time; // zmienna do przechowywania informacji o czasie modyfikacji pliku
+    time.modtime = info.st_mtime; // wstawienie do zmiennej daty modyfikacji pliku z katalogu zrodlowego
+    utime(b, &time); // aktualizacja czasu modyfkicaji pliku dla pliku wyjsciowego (kopii)
+
     munmap(map, size); // zwolnienie zmapowanej pamięci
     close(in); // zamknięcie pliku źródłowego
     close(out); // zamknięcie pliku docelowego
