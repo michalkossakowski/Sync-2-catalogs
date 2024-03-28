@@ -7,7 +7,7 @@
 #include <fcntl.h> // open O_RDONLY  O_CREAT
 #include <dirent.h> // opendir readdir closedir otwieranie zamykanie i czytanie z katalgoów
 #include <sys/mman.h> // mapowanie plików mmap
-
+#include <stdbool.h>
 
 #include <utime.h> // zmiana czasu modyfikacji pliku
 
@@ -74,18 +74,44 @@ void synchronizuj(char *a, char *b, long int prog, int R)
     DIR *in = opendir(a); // otwarcie katalogu a jako dir
     DIR *out = opendir(b); // otwarcie katalogu b jako dir
 
-    struct dirent *elem = readdir(in); // wskaźnik elemnet w katalogu
-    while (elem != NULL) // pętla przez wszystkie elementy katalogu a
+   
+    struct dirent *elemout = readdir(out); // wskaźnik elemnet w katalogu docelowym
+
+    while (elemout != NULL)
+    {
+        struct dirent *elem = readdir(in); // wskaźnik elemnet w katalogu
+        bool czyBylWZrodle = false;
+        while(elem != NULL)
+        {
+            if(strcmp(elemout->d_name,elem->d_name))
+            {
+                czyBylWZrodle = true;
+                break;
+            }
+            elem = readdir(in);
+        }
+        if(!czyBylWZrodle)
+        {
+            char outPath[1000];
+            snprintf(outPath, sizeof(outPath), "%s/%s", b, elemout->d_name);
+            unlink(outPath);
+        }
+        rewinddir(in);
+        elemout = readdir(out);
+    }
+    rewinddir(in); // otwarcie katalogu a jako dir
+    struct dirent *elemin = readdir(in); // wskaźnik elemnet w katalogu
+    while (elemin != NULL) // pętla przez wszystkie elementy katalogu a
     {
         // ls -la -> możemy sprawdzić że w każdym katalogu jest "." i ".."
         //pętla idzie przez wszystki elementy i też przez "." i ".." czy katalog w którym jesteśmy i katalog nadrzędny czyli musimy to wykluczyć żeby nie kopiować tego w nieskończoność
-        if (strcmp(elem->d_name, ".") != 0 && strcmp(elem->d_name, "..") != 0) // Ignorowanie "." - katalogu w którym jesteśmy i ".." - katalogu nadrzędnego
+        if (strcmp(elemin->d_name, ".") != 0 && strcmp(elemin->d_name, "..") != 0) // Ignorowanie "." - katalogu w którym jesteśmy i ".." - katalogu nadrzędnego
         {
             char inPath[1000]; // ścieżka do elementu w katalogu a
             char outPath[1000]; // ścieżka do elementu w katalogu b
 
-            snprintf(inPath, sizeof(inPath), "%s/%s", a, elem->d_name); // połącz nazwę pliku ze pełną ścieżką
-            snprintf(outPath, sizeof(outPath), "%s/%s", b, elem->d_name); // połącz nazwę pliku ze pełną ścieżką
+            snprintf(inPath, sizeof(inPath), "%s/%s", a, elemin->d_name); // połącz nazwę pliku ze pełną ścieżką
+            snprintf(outPath, sizeof(outPath), "%s/%s", b, elemin->d_name); // połącz nazwę pliku ze pełną ścieżką
 
             struct stat info; // zmienna na informacje o pliku
             stat(inPath, &info); // pobranie informacji o pliku
@@ -100,16 +126,32 @@ void synchronizuj(char *a, char *b, long int prog, int R)
                 }
                 synchronizuj(inPath, outPath, prog, R); // Rekurencyjnie synchronizuj katalogi
             }
-            else if(elem->d_type == DT_REG) // jak jest plikiem to kopiuj
+            else if(elemin->d_type == DT_REG) // jak jest plikiem to kopiuj
             {
-                printf("Wielkość pliku: %s wynosi: %ld bajtów\n", inPath, size);
-                if (size > prog) // Jeżeli plik większy niż podany próg
-                    kopiujMap(inPath, outPath); // Kopiuj z użyciem mmap/write
-                else
-                    kopiuj(inPath, outPath); // Kopiuj z użyciem read/write
+                struct stat copyInfo;
+                printf("%d",stat(outPath,&copyInfo));
+                if(stat(outPath,&copyInfo)==0)
+                {
+                    if(copyInfo.st_mtime != info.st_mtime)
+                    {
+                        printf("Wielkość pliku: %s wynosi: %ld bajtów\n", inPath, size);
+                        if (size > prog) // Jeżeli plik większy niż podany próg
+                            kopiujMap(inPath, outPath); // Kopiuj z użyciem mmap/write
+                        else
+                            kopiuj(inPath, outPath); // Kopiuj z użyciem read/write
+                    }
+                }else
+                {
+                    printf("Wielkość pliku: %s wynosi: %ld bajtów\n", inPath, size);
+                    if (size > prog) // Jeżeli plik większy niż podany próg
+                        kopiujMap(inPath, outPath); // Kopiuj z użyciem mmap/write
+                    else
+                        kopiuj(inPath, outPath); // Kopiuj z użyciem read/write
+                }
+                
             }
         }
-        elem = readdir(in); // sprawdź następny element
+        elemin = readdir(in); // sprawdź następny element
     }
 
     closedir(in); // zamknij katalog a
