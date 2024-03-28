@@ -9,6 +9,7 @@
 
 void program();
 int czy_katalog();
+void wpisz_do_log();
 
 int main(int count, char* arg[])
 {
@@ -121,8 +122,13 @@ int main(int count, char* arg[])
 
     // wywołanie demona
     daemon(1, 0);
+    wpisz_do_log("Uruchomienie demona");
     while (1) {
+        //wpisz_do_log("Obudzono demona w wyniku sygnału")
+
+        wpisz_do_log("Obudzono demona okresowo");
         program(arg[1],arg[2],prog,R);
+        wpisz_do_log("Zaśnięcie demona okresowo");
         sleep(slep);
     }
     return 0;
@@ -134,3 +140,4 @@ int main(int count, char* arg[])
 
 // ./dem a b slep prog -R
 // make - kompilowanie pliku zamiast gcc
+// cat /car/log/syslog -odczytywanie logów
