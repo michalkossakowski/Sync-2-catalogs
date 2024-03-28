@@ -6,11 +6,23 @@
 #include <sys/types.h>
 #include <signal.h>
 
+// // Funkcja obsługi sygnału SIGINT (Ctrl+C)
+// void handle_signal(int sig) {
+//     if (sig == SIGINT) {
+//         printf("\nOtrzymano sygnał SIGINT. Zatrzymywanie demona.\n");
+//         exit(EXIT_SUCCESS);
+//     }
+// }
 
 
 int main(int count, char* arg[])
 {
- 
+     // pid_t pid;
+    // // Przechwytuj sygnał SIGINT (Ctrl+C)
+    // signal(SIGINT, handle_signal);
+    // // Stwórz nowy proces potomny
+    // pid = fork();
+
 
     daemon(1, 0);
     while (1) {

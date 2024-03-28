@@ -5,29 +5,15 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <signal.h>
-#include <ctype.h> // do obsługi isdigit()
+#include <ctype.h> // do obsługi isdigit() czy jest liczbą
+
 void program();
-
 int czy_katalog();
-
-// // Funkcja obsługi sygnału SIGINT (Ctrl+C)
-// void handle_signal(int sig) {
-//     if (sig == SIGINT) {
-//         printf("\nOtrzymano sygnał SIGINT. Zatrzymywanie demona.\n");
-//         exit(EXIT_SUCCESS);
-//     }
-// }
 
 int main(int count, char* arg[])
 {
-    // pid_t pid;
-    // // Przechwytuj sygnał SIGINT (Ctrl+C)
-    // signal(SIGINT, handle_signal);
-    // // Stwórz nowy proces potomny
-    // pid = fork();
-
     long int prog = 2000000; // domyślny próg rozmiaru do kopiowania
-    long int slep = 10; // długośc spania
+    long int slep = 10; // długośc spania potem mozna ustawić na 5 min
     int R = 0; // czy użyta opcja -R
 
     // sprawdzenie ilości argumentów  
@@ -56,8 +42,9 @@ int main(int count, char* arg[])
     }
     else if(count==5)
     {
+        //./pro a b SLEEP -R
         if(strcmp(arg[4],"-R")==0)
-        { //./pro a b SLEEP -R
+        { 
             R=1;
             if(isdigit(*arg[3]))
             {
@@ -69,8 +56,9 @@ int main(int count, char* arg[])
                 return 0;
             }
         }
+        // ./pro a b SLEEP PROG
         else
-        { // ./pro a b SLEEP PROG
+        {
             if(isdigit(*arg[3]) && isdigit(*arg[4]))
             {
                 prog = atol(arg[4]);
@@ -84,14 +72,17 @@ int main(int count, char* arg[])
             
         }
     }
-    else if(count==4){
-        if(strcmp(arg[3],"-R")==0) // ./pro a b -R
+    else if(count==4)
+    {
+        // ./pro a b -R
+        if(strcmp(arg[3],"-R")==0) 
             R=1;
         else
         {
+            // ./pro a b SLEEP
             if(isdigit(*arg[3]))
             {
-                slep = atol(arg[3]); // ./pro a b SLEEP
+                slep = atol(arg[3]); 
             }
             else
             {
@@ -100,7 +91,9 @@ int main(int count, char* arg[])
             }
         }
     }
-    else if(count!=3){ // sprawdzenie ilości argumentów, przerwanie jeżeli jest ich za mało lub za dużo     //./pro a b
+    // sprawdzenie ilości argumentów, przerwanie jeżeli jest ich za mało lub za dużo     //./pro a b
+    else if(count!=3)
+    { 
         printf("!!! Podano za malo lub za duzo argumentow !!!\n");
         return 0;
     }
