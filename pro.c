@@ -9,6 +9,22 @@
 #include <sys/mman.h> // mapowanie plików mmap
 #include <stdbool.h> // umozliwa korzystanie z zmiennej boolowskiej
 #include <utime.h> // zmiana czasu modyfikacji pliku
+#include <syslog.h> // do otwierania i zapisywania w logach systemu
+#include <time.h> // do odczytywania czasu systemowego
+
+void wpisz_do_log(char* tekst)
+{
+    openlog("nasz demon", LOG_PID, LOG_DAEMON); // otwieramy log dla naszego demona
+    time_t rawtime; // zmienna do trzymania czasu w liczbie sekund od 01.01.1970
+    struct tm *timeinfo; //deklarujemy wskaznik do struktury z informacjami o czasie
+    time(&rawtime); // pobieramy aktualny czas 
+    timeinfo = localtime(&rawtime); // zapisujemy czas w strukturze timeinfo
+
+    char do_log[200]; //zmienna na napis
+    sprintf(do_log, "[%04d-%02d-%02d %02d:%02d:%02d] %s", timeinfo->tm_year + 1900, timeinfo->tm_mon + 1, timeinfo->tm_mday, timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec, tekst);// wpisujemy do stringa date godzine i wiadomosc
+    syslog(LOG_INFO, "%s",do_log); // zapisujemy stworzonego stringa w logu 
+    closelog(); // zamykamy log
+}
 
 int czy_katalog(char *path) // funkcja sprawdzajacy czy sciezka wskazuje na katalog
 {
@@ -41,6 +57,9 @@ void kopiuj(char *a,char *b) //funkcja kopiowania
     utime(b, &time); // aktualizacja czasu modyfkicaji pliku dla pliku wyjsciowego (kopii)
 
     printf("Kopia read/write : %s -> %s\n", a, b); // wypisz na ekranie informacje o kopiowaniu
+    char tekst[64]; // string na wiadmoosc
+    sprintf(tekst, "Kopia read/write: %s -> %s\n", a, b); // zapisanie wiadmosci do stringa
+    wpisz_do_log(tekst); // wyslanie do zapisania w logu
     free(buffor); //zwolnij buffor
     close(in); //zamknij plik wejsciowy
     close(out); // zamkinj plik wyjsciowy
@@ -58,6 +77,10 @@ void kopiujMap(char *a, char *b) // funkcja kopiowania
     char *map = mmap(NULL, size, PROT_READ, MAP_PRIVATE, in, 0); // mapowanie pliku źródłowego (bezpośredni dostęp do danych z pamieci operacyjnej)  // NULL - system sam wybiera adres w pamieci, PROT_READ - dostęp do oczytu, MAP_PRIVATE - mapowanie prywatne, 0 - przesunięcie
     write(out, map, size); // zapisanie zmapowanego pliku do pliku docelowego // map - wskaznik do daych ktore maja byc zapisane
     printf("Kopia mmap/write: %s -> %s\n", a, b); // wypisanie informacji o kopiowaniu
+    
+    char tekst[64]; // string na wiadmoosc
+    sprintf(tekst, "Kopia mmap/write: %s -> %s\n", a, b); // zapisanie wiadmosci do stringa
+    wpisz_do_log(tekst); // wyslanie do zapisania w logu
     
     struct utimbuf time; // zmienna do przechowywania informacji o czasie modyfikacji pliku
     time.modtime = info.st_mtime; // wstawienie do zmiennej daty modyfikacji pliku z katalogu zrodlowego
@@ -92,7 +115,10 @@ void UsuwanieZDocelowego(char *a, char *b)
             char outPath[1000];// ścieżka do elementu w katalogu b
             snprintf(outPath, sizeof(outPath), "%s/%s", b, elemout->d_name);// połącz nazwę pliku ze pełną ścieżką
             remove(outPath);//usuwa plik
-            printf("usunięto plik: %s\n", outPath);
+            printf("usunięto plik: %s\n", outPath);   
+            char tekst[1024]; // string na wiadmoosc
+            sprintf(tekst, "Usunięto plik: %s \n", outPath); // zapisanie wiadmosci do stringa
+            wpisz_do_log(tekst); // wyslanie do zapisania w logu
         }
         rewinddir(in);//przewija folder zrodlowy do poczatku
         elemout = readdir(out);// przechodzi do kolejnego pliku w docelowym
