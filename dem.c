@@ -7,15 +7,30 @@
 #include <signal.h>
 #include <ctype.h> // do obsługi isdigit() czy jest liczbą
 
-void program();
+// zmienne globalne żeby odebrać sigusr1
+
+void program(char *a, char *b, long int prog, int R);
 int czy_katalog();
 void wpisz_do_log();
 
+// co zrobic po odebraniu sigusr1
+void sigusr1_handler(int signum) {
+    wpisz_do_log("Obudzono demona w wyniku sygnału");
+}
+
 int main(int count, char* arg[])
 {
-    long int prog = 2000000; // domyślny próg rozmiaru do kopiowania
-    long int slep = 10; // długośc spania potem mozna ustawić na 5 min
-    int R = 0; // czy użyta opcja -R
+    char *a;
+    char *b;
+    long int prog;
+    long int slep;
+    int R;
+
+    signal(SIGUSR1, sigusr1_handler);
+
+    prog = 2000000; // domyślny próg rozmiaru do kopiowania
+    slep = 10; // długośc spania potem mozna ustawić na 5 min
+    R = 0; // czy użyta opcja -R
 
     // sprawdzenie ilości argumentów  
     // ./pro a b SLEEP PROG -R
@@ -99,8 +114,8 @@ int main(int count, char* arg[])
         return 0;
     }
 
-    char *a = arg[1];
-    char *b = arg[2];
+    a = arg[1];
+    b = arg[2];
 
     // sprawdzenie czy pierwszy argument to katalog, przerwanie jeżeli nie jest katalogiem
     if(czy_katalog(a)==0)
@@ -123,11 +138,10 @@ int main(int count, char* arg[])
     // wywołanie demona
     daemon(1, 0);
     wpisz_do_log("Uruchomienie demona");
-    while (1) {
-        //wpisz_do_log("Obudzono demona w wyniku sygnału")
 
+    while (1) {
         wpisz_do_log("Obudzono demona okresowo");
-        program(arg[1],arg[2],prog,R);
+        program(a,b,prog,R);
         wpisz_do_log("Zaśnięcie demona okresowo");
         sleep(slep);
     }
@@ -141,3 +155,4 @@ int main(int count, char* arg[])
 // ./dem a b slep prog -R
 // make - kompilowanie pliku zamiast gcc
 // cat /car/log/syslog -odczytywanie logów
+// kill -SIGUSR1 pid  - wysyła sygnał siguser

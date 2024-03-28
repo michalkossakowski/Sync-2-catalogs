@@ -5,6 +5,7 @@
         "fcntl.h": "c",
         "stdlib.h": "c",
         "string.h": "c",
-        "signal.h": "c"
+        "signal.h": "c",
+        "ctype.h": "c"
     }
 }
