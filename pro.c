@@ -7,7 +7,7 @@
 #include <fcntl.h> // open O_RDONLY  O_CREAT
 #include <dirent.h> // opendir readdir closedir otwieranie zamykanie i czytanie z katalgoów
 #include <sys/mman.h> // mapowanie plików mmap
-#include <stdbool.h>
+#include <stdbool.h> // umozliwa korzystanie z zmiennej boolowskiej
 
 #include <utime.h> // zmiana czasu modyfikacji pliku
 
@@ -69,38 +69,48 @@ void kopiujMap(char *a, char *b) // funkcja kopiowania
     close(out); // zamknięcie pliku docelowego
 }
 
-void synchronizuj(char *a, char *b, long int prog, int R)
+void UsuwanieZDocelowego(char *a, char *b)
 {
     DIR *in = opendir(a); // otwarcie katalogu a jako dir
-    DIR *out = opendir(b); // otwarcie katalogu b jako dir
-
-   
+    DIR *out = opendir(b); // otwarcie katalogu b jako di
     struct dirent *elemout = readdir(out); // wskaźnik elemnet w katalogu docelowym
 
-    while (elemout != NULL)
+    while (elemout != NULL)//przechodzi po wszystkich elementach zrodla
     {
         struct dirent *elem = readdir(in); // wskaźnik elemnet w katalogu
-        bool czyBylWZrodle = false;
-        while(elem != NULL)
+        bool czyBylWZrodle = false; //zmienna boolowska mowiaca czy dany plik byl w zrodle
+        while(elem != NULL)// wskaźnik elemnet w katalogu zrodlowym
         {
-            if(strcmp(elemout->d_name,elem->d_name))
+            if(strcmp(elemout->d_name,elem->d_name)==0) //sprawdza czy element w zrodle i destynacji maja taka sama nazwe
             {
-                czyBylWZrodle = true;
-                break;
+                czyBylWZrodle = true;// ustawia zmienna czyBylWZrodle
+                break; //przerywa przechodzenie po elementach folderu zrodla
             }
-            elem = readdir(in);
+            elem = readdir(in);// przechodzi do kolejnego pliku w zrodle
         }
-        if(!czyBylWZrodle)
+        if(!czyBylWZrodle)// jesli nie plik byl w zrodle
         {
-            char outPath[1000];
-            snprintf(outPath, sizeof(outPath), "%s/%s", b, elemout->d_name);
-            unlink(outPath);
+            char outPath[1000];// ścieżka do elementu w katalogu b
+            snprintf(outPath, sizeof(outPath), "%s/%s", b, elemout->d_name);// połącz nazwę pliku ze pełną ścieżką
+            remove(outPath);//usuwa plik
+            printf("usunięto plik: %s\n", outPath);
         }
-        rewinddir(in);
-        elemout = readdir(out);
+        rewinddir(in);//przewija folder zrodlowy do poczatku
+        elemout = readdir(out);// przechodzi do kolejnego pliku w docelowym
     }
-    rewinddir(in); // otwarcie katalogu a jako dir
+    closedir(in); // zamknij katalog a
+    closedir(out); // zamknij katalog b
+}
+
+void synchronizuj(char *a, char *b, long int prog, int R)
+{
+    UsuwanieZDocelowego(a, b);// usun wszystkie pliki z folderu docelowego jesli nie byly w folderze zrodlowym
+    DIR *in = opendir(a); // otwarcie katalogu a jako dir
+    DIR *out = opendir(b); // otwarcie katalogu b jako dir
+    
+   
     struct dirent *elemin = readdir(in); // wskaźnik elemnet w katalogu
+     
     while (elemin != NULL) // pętla przez wszystkie elementy katalogu a
     {
         // ls -la -> możemy sprawdzić że w każdym katalogu jest "." i ".."
@@ -117,22 +127,22 @@ void synchronizuj(char *a, char *b, long int prog, int R)
             stat(inPath, &info); // pobranie informacji o pliku
             long int size = info.st_size; // pobranie rozmiaru
 
-            if (S_ISDIR(info.st_mode)==1) // sprzwdzenie czy pobrany elemet to katalog
+            if (S_ISDIR(info.st_mode)==1 && R == 1) // sprzwdzenie czy pobrany elemet to katalog
             {
-                if (R == 1 && czy_katalog(outPath)==0) // Jeśli rekurencja jest włączona i katalog nie istnieje w katalogu docelowym
+                if (czy_katalog(outPath)==0) // Jeśli rekurencja jest włączona i katalog nie istnieje w katalogu docelowym
                 {
                     mkdir(outPath, 0777); // Utwórz katalog w katalogu docelowym
                     printf("Utworzono katalog: %s\n", outPath);
+                    
                 }
                 synchronizuj(inPath, outPath, prog, R); // Rekurencyjnie synchronizuj katalogi
             }
             else if(elemin->d_type == DT_REG) // jak jest plikiem to kopiuj
             {
-                struct stat copyInfo;
-                printf("%d",stat(outPath,&copyInfo));
-                if(stat(outPath,&copyInfo)==0)
+                struct stat copyInfo;// zmienna na informacje o pliku
+                if(stat(outPath,&copyInfo)==0)// sprawdza czy dany plik zawiera sie w folderze docelowym
                 {
-                    if(copyInfo.st_mtime != info.st_mtime)
+                    if(copyInfo.st_mtime != info.st_mtime) // sprawdza czy pliki maja rozne daty modyfikacji, i jesli sa to wykonuje kopie
                     {
                         printf("Wielkość pliku: %s wynosi: %ld bajtów\n", inPath, size);
                         if (size > prog) // Jeżeli plik większy niż podany próg
@@ -140,7 +150,7 @@ void synchronizuj(char *a, char *b, long int prog, int R)
                         else
                             kopiuj(inPath, outPath); // Kopiuj z użyciem read/write
                     }
-                }else
+                }else //jesli nie bylo pliku w folderze docelowym to go kopiuje
                 {
                     printf("Wielkość pliku: %s wynosi: %ld bajtów\n", inPath, size);
                     if (size > prog) // Jeżeli plik większy niż podany próg
@@ -153,9 +163,10 @@ void synchronizuj(char *a, char *b, long int prog, int R)
         }
         elemin = readdir(in); // sprawdź następny element
     }
-
+    
     closedir(in); // zamknij katalog a
     closedir(out); // zamknij katalog b
+    
 }
 
 int main(int count, char * arg[]) // count - liczba argumentów , arg - tablica zawierająca argumenty
