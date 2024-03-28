@@ -1,3 +1,4 @@
+#include <sys/types.h>
 // dodajemy niezbędne bilbioteki
 #include <stdio.h> // głowna biblioteka c
 #include <stdlib.h> // biblioteka pomocnicza do c do malloc i free
@@ -114,47 +115,8 @@ void synchronizuj(char *a, char *b, long int prog, int R)
     closedir(out); // zamknij katalog b
 }
 
-int main(int count, char * arg[]) // count - liczba argumentów , arg - tablica zawierająca argumenty
+int program(char *a ,char *b, long int prog, int  R) // count - liczba argumentów , arg - tablica zawierająca argumenty
 {
-    long int prog = 2000000; // domyślny próg rozmiaru do kopiowania
-    long int sleep = 10000; // długośc spania
-    int R = 0; // czy użyta opcja -R
-
-    // sprawdzenie ilości argumentów  
-    if(count==6){
-        if(strcmp(arg[5],"-R")==0){ // ./pro a b SLEEP PROG -R
-            R=1;
-            prog= atol(arg[4]);
-            sleep = atol(arg[3]);
-        }
-    }
-    else if(count==5){
-        if(strcmp(arg[4],"-R")==0){ //./pro a b SLEEP -R
-            R=1;
-            sleep = atol(arg[3]);
-        }
-        else{ // ./pro a b SLEEP PROG
-            prog = atol(arg[4]);
-            sleep = atol(arg[3]);
-        }
-    }
-    else if(count==4){
-        if(strcmp(arg[3],"-R")==0) // ./pro a b -R
-            R=1;
-        else
-            sleep = atol(arg[3]); // ./pro a b SLEEP
-    }
-    else if(count!=3){ // sprawdzenie ilości argumentów, przerwanie jeżeli jest ich za mało lub za dużo     //./pro a b
-        printf("!!! Podano za malo lub za duzo argumentow !!!\n");
-        return 0;
-    }
-
-    printf("> Sleep=%ld Prog=%ld Rekrurencja=%d \n",sleep,prog,R);
-
-    // przypisanie pobraych argumentów do zmienncyh
-    char *a = arg[1];
-    char *b = arg[2];
-
     // sprawdzenie czy pierwszy argument to katalog, przerwanie jeżeli nie jest katalogiem
     if(czy_katalog(a)==0)
     {
@@ -177,3 +139,54 @@ int main(int count, char * arg[]) // count - liczba argumentów , arg - tablica 
     // jak wszystko ok to komunikat
     printf("!!! Zsynchronizowano pomyślnie !!!\n");
 }
+
+int main(int count, char* arg[])
+{
+
+    long int prog = 2000000; // domyślny próg rozmiaru do kopiowania
+    long int slep = 10; // długośc spania
+    int R = 0; // czy użyta opcja -R
+
+    // sprawdzenie ilości argumentów  
+    if(count==6){
+        if(strcmp(arg[5],"-R")==0){ // ./pro a b SLEEP PROG -R
+            R=1;
+            prog= atol(arg[4]);
+            slep = atol(arg[3]);
+        }
+    }
+    else if(count==5){
+        if(strcmp(arg[4],"-R")==0){ //./pro a b SLEEP -R
+            R=1;
+            slep = atol(arg[3]);
+        }
+        else{ // ./pro a b SLEEP PROG
+            prog = atol(arg[4]);
+            slep = atol(arg[3]);
+        }
+    }
+    else if(count==4){
+        if(strcmp(arg[3],"-R")==0) // ./pro a b -R
+            R=1;
+        else
+            slep = atol(arg[3]); // ./pro a b SLEEP
+    }
+    else if(count!=3){ // sprawdzenie ilości argumentów, przerwanie jeżeli jest ich za mało lub za dużo     //./pro a b
+        printf("!!! Podano za malo lub za duzo argumentow !!!\n");
+        return 0;
+    }
+
+    daemon(1, 0);
+
+    int i = 0;
+    while (1) {
+        mkdir("test2", 0777);
+        program(arg[1],arg[2],prog,R);
+        sleep(slep);
+    }
+    return 0;
+}
+
+
+//ps aux
+//kill pid
