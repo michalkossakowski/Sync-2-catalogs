@@ -1,66 +1,73 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h> 
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <signal.h>
 
-// Funkcja obsługi sygnału SIGINT (Ctrl+C)
-void handle_signal(int sig) {
-    if (sig == SIGINT) {
-        printf("\nOtrzymano sygnał SIGINT. Zatrzymywanie demona.\n");
-        exit(EXIT_SUCCESS);
-    }
-}
+void program();
 
-int main() {
-   // pid_t pid;
-    int folder_num = 1; // Licznik folderów
+// // Funkcja obsługi sygnału SIGINT (Ctrl+C)
+// void handle_signal(int sig) {
+//     if (sig == SIGINT) {
+//         printf("\nOtrzymano sygnał SIGINT. Zatrzymywanie demona.\n");
+//         exit(EXIT_SUCCESS);
+//     }
+// }
 
+int main(int count, char* arg[])
+{
+    // pid_t pid;
     // // Przechwytuj sygnał SIGINT (Ctrl+C)
     // signal(SIGINT, handle_signal);
-
     // // Stwórz nowy proces potomny
     // pid = fork();
 
-    // // Jeśli nie udało się stworzyć procesu potomnego, zakończ
-    // if (pid < 0) {
-    //     perror("Błąd forkowania");
-    //     exit(EXIT_FAILURE);
-    // }
+    long int prog = 2000000; // domyślny próg rozmiaru do kopiowania
+    long int slep = 10; // długośc spania
+    int R = 0; // czy użyta opcja -R
 
-    // // Jeśli udało się stworzyć proces potomny, zakończ proces nadrzędny
-    // if (pid > 0) {
-    //     exit(EXIT_SUCCESS);
-    // }
-
-    // Zmień katalog roboczy na / (jeśli "nochdir" ustawione na 0)
-    // Nie zamykaj standardowych deskryptorów plików (jeśli "noclose" ustawione na 0)
-    if (daemon(1, 0) == -1) {
-        perror("Błąd tworzenia demona");
-        exit(EXIT_FAILURE);
+    // sprawdzenie ilości argumentów  
+    if(count==6){
+        if(strcmp(arg[5],"-R")==0){ // ./pro a b SLEEP PROG -R
+            R=1;
+            prog= atol(arg[4]);
+            slep = atol(arg[3]);
+        }
+    }
+    else if(count==5){
+        if(strcmp(arg[4],"-R")==0){ //./pro a b SLEEP -R
+            R=1;
+            slep = atol(arg[3]);
+        }
+        else{ // ./pro a b SLEEP PROG
+            prog = atol(arg[4]);
+            slep = atol(arg[3]);
+        }
+    }
+    else if(count==4){
+        if(strcmp(arg[3],"-R")==0) // ./pro a b -R
+            R=1;
+        else
+            slep = atol(arg[3]); // ./pro a b SLEEP
+    }
+    else if(count!=3){ // sprawdzenie ilości argumentów, przerwanie jeżeli jest ich za mało lub za dużo     //./pro a b
+        printf("!!! Podano za malo lub za duzo argumentow !!!\n");
+        return 0;
     }
 
-// Tworzenie nazwy foldera z inkrementowanym numerem
-        char folder_name[256];
-        snprintf(folder_name, sizeof(folder_name), "demonowy_folder_%d", folder_num);
-
-
-    // Utwórz katalog z uprawnieniami 0777 (rwxrwxrwx)
-    if (mkdir(folder_name, 0777) == -1) {
-        perror("Błąd tworzenia katalogu");
-        exit(EXIT_FAILURE);
-    }
-
-    // Główna pętla demoniczna
+    // wywołanie demona
+    daemon(1, 0);
     while (1) {
-        // Wymuszenie wypisania bufora
-        fflush(stdout);
-         // Zwiększ numer foldera
-        folder_num++;
-        // Poczekaj 20 sekund
-        sleep(20);
+        program(arg[1],arg[2],prog,R);
+        sleep(slep);
     }
-
-    exit(EXIT_SUCCESS);
+    return 0;
 }
+
+//ps aux - pokaż procesy
+//kill pid - zamknij proces
+//rm -r - usuwanie
+
+// ./dem a b slep prog -R
