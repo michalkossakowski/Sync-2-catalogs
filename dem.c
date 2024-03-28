@@ -7,6 +7,7 @@
 #include <signal.h>
 #include <ctype.h> // do obsługi isdigit() czy jest liczbą
 
+
 void program();
 int czy_katalog();
 void wpisz_do_log();
@@ -18,13 +19,13 @@ void sigusr1_handler(int signum) {
 
 int main(int count, char* arg[])
 {
+    signal(SIGUSR1, sigusr1_handler);
+
     char *a;
     char *b;
     long int prog;
     long int slep;
     int R;
-
-    signal(SIGUSR1, sigusr1_handler);
 
     prog = 2000000; // domyślny próg rozmiaru do kopiowania
     slep = 10; // długośc spania potem mozna ustawić na 5 min
