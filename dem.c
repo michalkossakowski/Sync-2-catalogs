@@ -71,3 +71,4 @@ int main(int count, char* arg[])
 //rm -r - usuwanie
 
 // ./dem a b slep prog -R
+// make - kompilowanie pliku zamiast gcc
