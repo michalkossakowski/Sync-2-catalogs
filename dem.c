@@ -7,8 +7,6 @@
 #include <signal.h>
 #include <ctype.h> // do obsługi isdigit() czy jest liczbą
 
-// zmienne globalne żeby odebrać sigusr1
-
 
 void program();
 int czy_katalog();
@@ -28,7 +26,7 @@ int main(int count, char* arg[])
     long int prog;
     long int slep;
     int R;
-    
+
     prog = 2000000; // domyślny próg rozmiaru do kopiowania
     slep = 10; // długośc spania potem mozna ustawić na 5 min
     R = 0; // czy użyta opcja -R
