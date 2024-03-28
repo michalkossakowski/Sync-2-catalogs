@@ -3,6 +3,7 @@
         "types.h": "c",
         "stat.h": "c",
         "fcntl.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "string.h": "c"
     }
 }

@@ -116,22 +116,6 @@ void synchronizuj(char *a, char *b, long int prog, int R)
 
 int program(char *a ,char *b, long int prog, int  R) // count - liczba argumentów , arg - tablica zawierająca argumenty
 {
-    // sprawdzenie czy pierwszy argument to katalog, przerwanie jeżeli nie jest katalogiem
-    if(czy_katalog(a)==0)
-    {
-        printf("!!! Pierwszy argument: %s  nie jest katalogiem !!!\n",a);
-        return 0;
-    }
-    printf("> Katalog 1: %s \n",a);
-
-    // sprawdzenie czy drugi argument to katalog, przerwanie jeżeli nie jest katalogiem
-    if(czy_katalog(b)==0)
-    {
-        printf("!!! Drugi argument: %s nie jest katalogiem !!!\n",b);
-        return 0;
-    }
-    printf("> Katalog 2: %s \n",b);
-
     //wywołanie funkcji do synchronizacji
     synchronizuj(a,b,prog,R);
     
