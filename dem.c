@@ -7,9 +7,7 @@
 #include <signal.h>
 #include <ctype.h> // do obsługi isdigit() czy jest liczbą
 
-// zmienne globalne żeby odebrać sigusr1
-
-void program(char *a, char *b, long int prog, int R);
+void program();
 int czy_katalog();
 void wpisz_do_log();
 
