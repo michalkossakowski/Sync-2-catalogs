@@ -12,17 +12,16 @@
 #include <syslog.h> // do otwierania i zapisywania w logach systemu
 #include <time.h> // do odczytywania czasu systemowego
 
-void wpisz_do_log(char* tekst)
+void wpisz_do_log(char* tekst) // funkcja do wpisywania wiadomości do logów
 {
-    openlog("nasz demon", LOG_PID, LOG_DAEMON); // otwieramy log dla naszego demona
-    time_t rawtime; // zmienna do trzymania czasu w liczbie sekund od 01.01.1970
-    struct tm *timeinfo; //deklarujemy wskaznik do struktury z informacjami o czasie
-    time(&rawtime); // pobieramy aktualny czas 
-    timeinfo = localtime(&rawtime); // zapisujemy czas w strukturze timeinfo
-
-    char do_log[200]; //zmienna na napis
-    sprintf(do_log, "[%04d-%02d-%02d %02d:%02d:%02d] %s", timeinfo->tm_year + 1900, timeinfo->tm_mon + 1, timeinfo->tm_mday, timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec, tekst);// wpisujemy do stringa date godzine i wiadomosc
-    syslog(LOG_INFO, "%s",do_log); // zapisujemy stworzonego stringa w logu 
+    openlog("nasz demon", LOG_PID, LOG_DAEMON); // otwieramy log dla naszego demona LOG_PID - identyfikator procesu LOG_DAEMON - flaga oznaczająca demona
+    time_t t; // zmienna do trzymania czasu
+    struct tm *tinfo; //deklarujemy wskaznik do struktury z informacjami o czasie
+    time(&t); // pobieramy aktualny czas 
+    tinfo = localtime(&t); // zapisujemy czas w strukturze timeinfo
+    char do_log[200]; //zmienna do przetrzymywania wiadomości            +1900 - ponieważ tm_year przetrzymuje rok od 1900 roku, +1 ponieważ tm_mon numeruje miesiące od 0 do 11
+    sprintf(do_log, "[%04d-%02d-%02d %02d:%02d:%02d] %s", tinfo->tm_year + 1900, tinfo->tm_mon + 1,tinfo->tm_mday, tinfo->tm_hour, tinfo->tm_min, tinfo->tm_sec, tekst);// wpisujemy do stringa date godzine i wiadomosc
+    syslog(LOG_INFO, "%s", do_log); // zapisujemy stworzoną wiadomość w logu. LOG_INFO - zapisywanie do logu informacji ogólnych a nie błędów ani ostrzeżen itp.
     closelog(); // zamykamy log
 }
 
@@ -80,7 +79,7 @@ void kopiujMap(char *a, char *b) // funkcja kopiowania
     
     char tekst[64]; // string na wiadmoosc
     sprintf(tekst, "Kopia mmap/write: %s -> %s\n", a, b); // zapisanie wiadmosci do stringa
-    wpisz_do_log(tekst); // wyslanie do zapisania w logu
+    wpisz_do_log(tekst); // wyslanie wiadmosci do zapisania w logu
     
     struct utimbuf time; // zmienna do przechowywania informacji o czasie modyfikacji pliku
     time.modtime = info.st_mtime; // wstawienie do zmiennej daty modyfikacji pliku z katalogu zrodlowego
@@ -118,7 +117,7 @@ void UsuwanieZDocelowego(char *a, char *b)
             printf("usunięto plik: %s\n", outPath);   
             char tekst[1024]; // string na wiadmoosc
             sprintf(tekst, "Usunięto plik: %s \n", outPath); // zapisanie wiadmosci do stringa
-            wpisz_do_log(tekst); // wyslanie do zapisania w logu
+            wpisz_do_log(tekst); // wyslanie wiadmosci do zapisania w logu
         }
         rewinddir(in);//przewija folder zrodlowy do poczatku
         elemout = readdir(out);// przechodzi do kolejnego pliku w docelowym
@@ -163,10 +162,10 @@ void synchronizuj(char *a, char *b, long int prog, int R)
             }
             else if(elemin->d_type == DT_REG) // jak jest plikiem to kopiuj
             {
-                struct stat copyInfo;// zmienna na informacje o pliku
-                if(stat(outPath,&copyInfo)==0)// sprawdza czy dany plik zawiera sie w folderze docelowym
+                struct stat copy_info;// zmienna na informacje o pliku
+                if(stat(outPath,&copy_info)==0)// sprawdza czy dany plik zawiera sie w folderze docelowym
                 {
-                    if(copyInfo.st_mtime != info.st_mtime) // sprawdza czy pliki maja rozne daty modyfikacji, i jesli sa to wykonuje kopie
+                    if(copy_info.st_mtime != info.st_mtime) // sprawdza czy pliki maja rozne daty modyfikacji, i jesli sa to wykonuje kopie
                     {
                         printf("Wielkość pliku: %s wynosi: %ld bajtów\n", inPath, size);
                         if (size > prog) // Jeżeli plik większy niż podany próg
@@ -174,7 +173,8 @@ void synchronizuj(char *a, char *b, long int prog, int R)
                         else
                             kopiuj(inPath, outPath); // Kopiuj z użyciem read/write
                     }
-                }else //jesli nie bylo pliku w folderze docelowym to go kopiuje
+                }
+                else //jesli nie bylo pliku w folderze docelowym to go kopiuje
                 {
                     printf("Wielkość pliku: %s wynosi: %ld bajtów\n", inPath, size);
                     if (size > prog) // Jeżeli plik większy niż podany próg
@@ -182,21 +182,17 @@ void synchronizuj(char *a, char *b, long int prog, int R)
                     else
                         kopiuj(inPath, outPath); // Kopiuj z użyciem read/write
                 }
-                
             }
         }
         elemin = readdir(in); // sprawdź następny element
     }
-    
     closedir(in); // zamknij katalog a
     closedir(out); // zamknij katalog b
 }
 
-int program(char *a, char *b, long int prog, int R) // a - katalog zrodłowy, b - katalog docelowy, prog - próg zmiany funkcji do kopiowania na mapowanie, int R 1-rekurencyjne 0-nie
+int program(char *a, char *b, long int prog, int R) // przyjmowane argumenty a - katalog zrodłowy, b - katalog docelowy, prog - próg zmiany funkcji do kopiowania na mapowanie, int R 1-rekurencyjne 0-nie
 {
-    //wywołanie funkcji do synchronizacji
-    synchronizuj(a,b,prog,R);
-    
-    // jak wszystko ok to komunikat
-    printf("!!! Zsynchronizowano pomyślnie !!!\n");
+    synchronizuj(a,b,prog,R);//wywołanie funkcji do synchronizacji
+    printf("!!! Zsynchronizowano pomyślnie !!!\n"); // jak wszystko ok to komunikat
+    wpisz_do_log("!!! Zsynchronizowano pomyślnie !!!"); // wpisanie komunikatu do logu
 }
