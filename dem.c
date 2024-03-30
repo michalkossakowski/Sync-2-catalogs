@@ -1,13 +1,13 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h> 
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+#include <stdio.h> // głowna biblioteka c
+#include <stdlib.h> // biblioteka pomocnicza do c do malloc i free
+#include <string.h> // bilbioteka do napisów w c
+#include <sys/stat.h> // uzyskiwanie informacji o pliku
+#include <unistd.h> // unix standard close/read/write/fork/sleep/exec
+#include <sys/types.h> 
 #include <signal.h>
-#include <ctype.h> // do obsługi isdigit() czy jest liczbą
+#include <ctype.h> // do obsługi isdigit() - sprawdzenie czy zmiennajest liczbą
 
-
+// deklaracja funkcji z drugiego pliku pro.c
 void program();
 int czy_katalog();
 void wpisz_do_log();
