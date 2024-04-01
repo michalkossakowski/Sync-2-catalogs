@@ -90,6 +90,37 @@ void kopiujMap(char *a, char *b) // funkcja kopiowania
     close(out); // zamknięcie pliku docelowego
 }
 
+
+void OproznianieKatalogu(char *katalog){
+    DIR *kat = opendir(katalog); // otwarcie katalogu katalog jako kat
+    struct dirent *el = readdir(kat);// wskaźnik elemnet w katalogu
+    
+    while(el != NULL)//przechodzi po wszystkich elementach katalogu
+    {
+        if (strcmp(el->d_name, ".") != 0 && strcmp(el->d_name, "..") != 0) // sprawdza czy jest to katalog nadrzedny albo katalog w ktorym algorytm sie znajduje, jesli tak to idzie do nastepnego
+        {
+            char elPath[1000];// ścieżka do elementu w katalogu b
+            snprintf(elPath, sizeof(elPath), "%s/%s", katalog, el->d_name);// połącz nazwę pliku ze pełną ścieżką
+        
+            struct stat info; // zmienna na informacje o pliku
+            stat(elPath, &info); // pobranie informacji o pliku
+        
+            if(S_ISDIR(info.st_mode)==1)// sprawdzamy czy jest katalogiem
+            {
+                OproznianieKatalogu(elPath); // usuwanie zawartosci katalogu 
+            }
+            if(remove(elPath) == 0)
+            {
+                char tekst[1024]; // string na wiadmoosc
+                sprintf(tekst, "Usunięto plik: %s \n", elPath); // zapisanie wiadmosci do stringa
+                wpisz_do_log(tekst); // wyslanie wiadmosci do zapisania w logu
+            }
+        }
+        el = readdir(kat); // przechodzi do kolejnego pliku w katalogu
+    }
+    closedir(kat); // zamknij katalog 
+}
+
 void UsuwanieZDocelowego(char *a, char *b)
 {
     DIR *in = opendir(a); // otwarcie katalogu a jako dir
@@ -113,7 +144,17 @@ void UsuwanieZDocelowego(char *a, char *b)
         {
             char outPath[1000];// ścieżka do elementu w katalogu b
             snprintf(outPath, sizeof(outPath), "%s/%s", b, elemout->d_name);// połącz nazwę pliku ze pełną ścieżką
+            
+
+            struct stat info; // zmienna na informacje o pliku
+            stat(outPath, &info); // pobranie informacji o pliku
+
+            if(S_ISDIR(info.st_mode)==1)// sprawdzamy czy jest katalogiem
+            {
+                OproznianieKatalogu(outPath); // usuwanie zawartosci katalogu
+            }
             remove(outPath);//usuwa plik
+
             printf("usunięto plik: %s\n", outPath);   
             char tekst[1024]; // string na wiadmoosc
             sprintf(tekst, "Usunięto plik: %s \n", outPath); // zapisanie wiadmosci do stringa
@@ -125,6 +166,7 @@ void UsuwanieZDocelowego(char *a, char *b)
     closedir(in); // zamknij katalog a
     closedir(out); // zamknij katalog b
 }
+
 
 void synchronizuj(char *a, char *b, long int prog, int R)
 {
